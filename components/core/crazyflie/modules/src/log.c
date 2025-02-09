@@ -379,6 +379,12 @@ void logControlProcess()
 {
   int ret = ENOEXEC;
 
+  DEBUG_PRINT_LOCAL("Packet is CONTROL");
+  for (size_t i = 0; i < p.size + 1; i++) {
+    printf("%d ", p.raw[i]);
+  }
+  printf("\n");
+
   switch(p.data[0])
   {
     case CONTROL_CREATE_BLOCK:
@@ -446,7 +452,7 @@ static int logCreateBlock(unsigned char id, struct ops_setting * settings, int l
 	return ENOMEM;
   }
 
-  LOG_DEBUG("Added block ID %d\n", id);
+  DEBUG_PRINT_LOCAL("Added block ID %d\n", id);
 
   return logAppendBlock(id, settings, len);
 }
@@ -475,7 +481,7 @@ static int logCreateBlockV2(unsigned char id, struct ops_setting_v2 * settings, 
   return ENOMEM;
   }
 
-  LOG_DEBUG("Added block ID %d\n", id);
+  DEBUG_PRINT_LOCAL("Added block ID %d\n", id);
 
   return logAppendBlockV2(id, settings, len);
 }
@@ -491,13 +497,13 @@ static int logAppendBlock(int id, struct ops_setting * settings, int len)
   int i;
   struct log_block * block;
 
-  LOG_DEBUG("Appending %d variable to block %d\n", len, id);
+  DEBUG_PRINT_LOCAL("Appending %d variable to block %d\n", len, id);
 
   for (i=0; i<LOG_MAX_BLOCKS; i++)
     if (logBlocks[i].id == id) break;
 
   if (i >= LOG_MAX_BLOCKS) {
-    LOG_ERROR("Trying to append block id %d that doesn't exist.", id);
+    DEBUG_PRINT_LOCAL("Trying to append block id %d that doesn't exist.", id);
     return ENOENT;
   }
 
@@ -510,14 +516,14 @@ static int logAppendBlock(int id, struct ops_setting * settings, int len)
     int varId;
 
     if ((currentLength + typeLength[settings[i].logType & TYPE_MASK])>LOG_MAX_LEN) {
-      LOG_ERROR("Trying to append a full block. Block id %d.\n", id);
+      DEBUG_PRINT_LOCAL("Trying to append a full block. Block id %d.\n", id);
       return E2BIG;
     }
 
     ops = opsMalloc();
 
     if(!ops) {
-      LOG_ERROR("No more ops memory free!\n");
+      DEBUG_PRINT_LOCAL("No more ops memory free!\n");
       return ENOMEM;
     }
 
@@ -526,7 +532,7 @@ static int logAppendBlock(int id, struct ops_setting * settings, int len)
       varId = variableGetIndex(settings[i].id);
 
       if (varId<0) {
-        LOG_ERROR("Trying to add variable Id %d that does not exists.", settings[i].id);
+        DEBUG_PRINT_LOCAL("Trying to add variable Id %d that does not exists.", settings[i].id);
         return ENOENT;
       }
 
@@ -535,7 +541,7 @@ static int logAppendBlock(int id, struct ops_setting * settings, int len)
       ops->logType     = settings[i].logType & TYPE_MASK;
       ops->acquisitionType = acquisitionTypeFromLogType(logs[varId].type);
 
-      LOG_DEBUG("Appended variable %d to block %d\n", settings[i].id, id);
+      DEBUG_PRINT_LOCAL("Appended variable %d to block %d\n", settings[i].id, id);
     } else {                     //Memory variable
       //TODO: Check that the address is in ram
       ops->variable    = (void*)(&settings[i]+1);
@@ -544,11 +550,11 @@ static int logAppendBlock(int id, struct ops_setting * settings, int len)
       ops->acquisitionType = acqType_memory;
       i += 2;
 
-      LOG_DEBUG("Appended var addr 0x%x to block %d\n", (int)ops->variable, id);
+      DEBUG_PRINT_LOCAL("Appended var addr 0x%x to block %d\n", (int)ops->variable, id);
     }
     blockAppendOps(block, ops);
 
-    LOG_DEBUG("   Now lenght %d\n", blockCalcLength(block));
+    DEBUG_PRINT_LOCAL("   Now lenght %d\n", blockCalcLength(block));
   }
 
   return 0;
@@ -565,7 +571,7 @@ static int logAppendBlockV2(int id, struct ops_setting_v2 * settings, int len)
     if (logBlocks[i].id == id) break;
 
   if (i >= LOG_MAX_BLOCKS) {
-    LOG_ERROR("Trying to append block id %d that doesn't exist.", id);
+    DEBUG_PRINT_LOCAL("Trying to append block id %d that doesn't exist.", id);
     return ENOENT;
   }
 
@@ -578,14 +584,14 @@ static int logAppendBlockV2(int id, struct ops_setting_v2 * settings, int len)
     int varId;
 
     if ((currentLength + typeLength[settings[i].logType & TYPE_MASK])>LOG_MAX_LEN) {
-      LOG_ERROR("Trying to append a full block. Block id %d.\n", id);
+      DEBUG_PRINT_LOCAL("Trying to append a full block. Block id %d.\n", id);
       return E2BIG;
     }
 
     ops = opsMalloc();
 
     if(!ops) {
-      LOG_ERROR("No more ops memory free!\n");
+      DEBUG_PRINT_LOCAL("No more ops memory free!\n");
       return ENOMEM;
     }
 
@@ -594,7 +600,7 @@ static int logAppendBlockV2(int id, struct ops_setting_v2 * settings, int len)
       varId = variableGetIndex(settings[i].id);
 
       if (varId<0) {
-        LOG_ERROR("Trying to add variable Id %d that does not exists.", settings[i].id);
+        DEBUG_PRINT_LOCAL("Trying to add variable Id %d that does not exists.", settings[i].id);
         return ENOENT;
       }
 
@@ -603,7 +609,7 @@ static int logAppendBlockV2(int id, struct ops_setting_v2 * settings, int len)
       ops->logType     = settings[i].logType & TYPE_MASK;
       ops->acquisitionType = acquisitionTypeFromLogType(logs[varId].type);
 
-      LOG_DEBUG("Appended variable %d to block %d\n", settings[i].id, id);
+      DEBUG_PRINT_LOCAL("Appended variable %d to block %d\n", settings[i].id, id);
     } else {                     //Memory variable
       //TODO: Check that the address is in ram
       ops->variable    = (void*)(&settings[i]+1);
@@ -612,11 +618,11 @@ static int logAppendBlockV2(int id, struct ops_setting_v2 * settings, int len)
       ops->acquisitionType = acqType_memory;
       i += 2;
 
-      LOG_DEBUG("Appended var addr 0x%x to block %d\n", (int)ops->variable, id);
+      DEBUG_PRINT_LOCAL("Appended var addr 0x%x to block %d\n", (int)ops->variable, id);
     }
     blockAppendOps(block, ops);
 
-    LOG_DEBUG("   Now lenght %d\n", blockCalcLength(block));
+    DEBUG_PRINT_LOCAL("   Now lenght %d\n", blockCalcLength(block));
   }
 
   return 0;
@@ -632,7 +638,7 @@ static int logDeleteBlock(int id)
     if (logBlocks[i].id == id) break;
 
   if (i >= LOG_MAX_BLOCKS) {
-    LOG_ERROR("trying to delete block id %d that doesn't exist.", id);
+    DEBUG_PRINT_LOCAL("trying to delete block id %d that doesn't exist.", id);
     return ENOENT;
   }
 
@@ -662,11 +668,11 @@ static int logStartBlock(int id, unsigned int period)
     if (logBlocks[i].id == id) break;
 
   if (i >= LOG_MAX_BLOCKS) {
-    LOG_ERROR("Trying to start block id %d that doesn't exist.", id);
+    DEBUG_PRINT_LOCAL("Trying to start block id %d that doesn't exist.", id);
     return ENOENT;
   }
 
-  LOG_DEBUG("Starting block %d with period %dms\n", id, period);
+  DEBUG_PRINT_LOCAL("Starting block %d with period %dms\n", id, period);
 
   if (period>0)
   {
@@ -688,7 +694,7 @@ static int logStopBlock(int id)
     if (logBlocks[i].id == id) break;
 
   if (i >= LOG_MAX_BLOCKS) {
-    LOG_ERROR("Trying to stop block id %d that doesn't exist.\n", id);
+    DEBUG_PRINT_LOCAL("Trying to stop block id %d that doesn't exist.\n", id);
     return ENOENT;
   }
 
